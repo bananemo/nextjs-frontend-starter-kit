@@ -15,33 +15,7 @@ env:
   CI: 'true'
 
 jobs:
-  build:
-    name: Build
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-project
-
-      - name: Restore Next.js cache
-        uses: actions/cache@v5
-        with:
-          path: .next/cache
-          key: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**') }}
-          restore-keys: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
-
-      - name: Build
-        run: pnpm build
-
-      - name: Cache build output for the e2e job
-        uses: actions/cache/save@v5
-        with:
-          path: |
-            .next
-            next-env.d.ts
-          key: nextjs-build-${{ github.sha }}
-
+  # Everything that needs no browser and no build. Fast, so it fails first.
   static:
     name: Static checks
     runs-on: ubuntu-latest
@@ -58,8 +32,8 @@ jobs:
         if: github.event_name == 'pull_request'
         run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
 
-      # `next typegen` must run first: PageProps/LayoutProps are generated
-      # globals and do not exist until it has.
+      # `next typegen` runs first: PageProps/LayoutProps are generated globals
+      # and do not exist until it has. `pnpm check:types` does both.
       - name: Types
         run: pnpm check:types
 
@@ -69,54 +43,55 @@ jobs:
       - name: Unused code and dependencies
         run: pnpm check:deps
 
+  # Component tests and Storybook stories are both Vitest browser-mode runs, so
+  # they share one container rather than paying for two.
   test:
-    name: Unit and component tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    # Component tests run in a real browser, so use the image that ships one.
-    container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-project
-
-      - name: Test
-        run: pnpm test --coverage
-
-  storybook:
-    name: Storybook tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    container:
-      image: mcr.microsoft.com/playwright:v1.63.0-noble
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: ./.github/actions/setup-project
-
-      - name: Run stories as tests
-        run: pnpm storybook:test
-
-  e2e:
-    name: End-to-end tests
+    name: Tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    needs: [build]
     container:
       image: mcr.microsoft.com/playwright:v1.63.0-noble
     steps:
       - uses: actions/checkout@v6
 
       - uses: ./.github/actions/setup-project
-        with:
-          restore-nextjs-cache: true
 
-      - name: Run e2e tests
+      - name: Unit and component tests
+        run: pnpm test --coverage
+
+      - name: Storybook stories
+        run: pnpm storybook:test
+
+  # Builds and then exercises the build. Keeping both in one job avoids handing
+  # `.next` between jobs: a cache written on the host runner is not reliably
+  # restorable inside a container, because the compression differs.
+  e2e:
+    name: Build and E2E
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Restore Next.js cache
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**') }}
+          restore-keys: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build
+        run: pnpm build
+
+      # playwright.config.ts starts `pnpm start` against the build above.
+      - name: E2E tests
         run: pnpm test:e2e
 
       - name: Upload test results
-        if: always()
+        if: failure()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-results

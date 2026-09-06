@@ -30,8 +30,11 @@ export default defineConfig({
     video: process.env.CI ? 'retain-on-failure' : undefined,
   },
 
-  projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
-    ...(process.env.CI ? [{ name: 'firefox', use: { ...devices['Desktop Firefox'] } }] : []),
-  ],
+  /*
+   * Chromium only. Adding Firefox roughly doubles the e2e run and needs extra
+   * setup inside the CI container; add it back here if you need cross-browser
+   * coverage:
+   *   { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+   */
+  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
