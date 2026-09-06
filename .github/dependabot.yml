@@ -1,0 +1,27 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+      time: '06:00'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: chore
+    groups:
+      # One PR for all minor/patch bumps, so CI gates them together.
+      npm-deps:
+        update-types: [minor, patch]
+    ignore:
+      # Majors are reviewed by hand — they tend to need code changes.
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+      time: '06:05'
+    open-pull-requests-limit: 1
+    commit-message:
+      prefix: chore

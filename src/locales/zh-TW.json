@@ -1,0 +1,58 @@
+{
+  "Metadata": {
+    "title": "Next.js 前端專案範本",
+    "description": "純前端的 Next.js 範本，內建可抽換的錯誤追蹤與分析層。"
+  },
+  "Home": {
+    "title": "Next.js 前端專案範本",
+    "subtitle": "純前端。沒有資料庫、沒有後端、沒有身分驗證。",
+    "demoFormLink": "試試範例表單",
+    "features": {
+      "heading": "內容包含",
+      "ui": "shadcn/ui、Tailwind CSS v4，以及型別化的設計 token 模組",
+      "forms": "react-hook-form 與 zod，搭配獨立的欄位元件",
+      "observability": "不綁定供應商的錯誤回報層",
+      "analytics": "不綁定供應商的分析層",
+      "i18n": "next-intl 與語系前綴路由",
+      "seo": "Metadata、sitemap、robots、JSON-LD 與 OG 圖片"
+    }
+  },
+  "DemoForm": {
+    "title": "範例表單",
+    "description": "示範欄位寫法：以 react-hook-form 管理狀態、zod 負責驗證。",
+    "name": "姓名",
+    "namePlaceholder": "王小明",
+    "email": "電子郵件",
+    "emailPlaceholder": "ada@example.com",
+    "role": "職務",
+    "rolePlaceholder": "請選擇職務",
+    "roleEngineer": "工程師",
+    "roleDesigner": "設計師",
+    "roleOther": "其他",
+    "headcount": "團隊人數",
+    "headcountDescription": "團隊的成員數量。",
+    "submit": "送出",
+    "submitted": "感謝你，{name}。"
+  },
+  "Error": {
+    "title": "發生錯誤",
+    "description": "發生了未預期的錯誤，我們已收到回報。",
+    "retry": "重試"
+  },
+  "NotFound": {
+    "title": "找不到頁面",
+    "description": "找不到你要的頁面。",
+    "backHome": "回到首頁"
+  },
+  "ThemeToggle": {
+    "label": "切換佈景主題",
+    "light": "淺色",
+    "dark": "深色",
+    "system": "跟隨系統"
+  },
+  "LocaleSwitcher": {
+    "label": "切換語言",
+    "en": "English",
+    "zh-TW": "中文（台灣）"
+  }
+}

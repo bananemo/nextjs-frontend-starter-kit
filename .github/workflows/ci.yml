@@ -1,0 +1,124 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Env validation is skipped in CI; see `skipValidation` in src/lib/env.ts.
+  CI: 'true'
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Restore Next.js cache
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**') }}
+          restore-keys: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build
+        run: pnpm build
+
+      - name: Cache build output for the e2e job
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            .next
+            next-env.d.ts
+          key: nextjs-build-${{ github.sha }}
+
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Needed to validate every commit in the PR range.
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Validate commit messages
+        if: github.event_name == 'pull_request'
+        run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      # `next typegen` must run first: PageProps/LayoutProps are generated
+      # globals and do not exist until it has.
+      - name: Types
+        run: pnpm check:types
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unused code and dependencies
+        run: pnpm check:deps
+
+  test:
+    name: Unit and component tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Component tests run in a real browser, so use the image that ships one.
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Test
+        run: pnpm test --coverage
+
+  storybook:
+    name: Storybook tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Run stories as tests
+        run: pnpm storybook:test
+
+  e2e:
+    name: End-to-end tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [build]
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+        with:
+          restore-nextjs-cache: true
+
+      - name: Run e2e tests
+        run: pnpm test:e2e
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7
