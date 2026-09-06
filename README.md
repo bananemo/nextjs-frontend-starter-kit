@@ -220,6 +220,26 @@ incompatible with Partial Prerendering. If you need a strict CSP more than stati
 rendering, move the CSP into `proxy.ts` and read the nonce with
 `(await headers()).get('x-nonce')`.
 
+## Branching and CI
+
+Feature branches target `develop`; `develop` is promoted to `main` by pull
+request. CI is tiered to match, because the checks themselves take about a
+minute while spinning up a browser container costs roughly 40s each time.
+
+| | Feature PR (→ `develop`) | Promotion PR (`develop` → `main`) |
+| --- | --- | --- |
+| Static checks — types, lint, Knip, commitlint | yes | yes |
+| Unit, component and Storybook tests | yes | yes |
+| Production build + end-to-end tests | — | yes |
+
+Everything that reads the code you just changed runs on every PR. The extra
+tier is a second container and a full production build, which is worth paying
+for at the point the code is about to ship, not on every push.
+
+> If you enable required status checks, only require **Build and E2E** on
+> `main`. A job skipped by an `if:` condition never reports a status, so
+> requiring it on `develop` would block every feature PR indefinitely.
+
 ## Docker (optional)
 
 The default target is Vercel, where the `Dockerfile` is unused. It is included

@@ -1,9 +1,17 @@
 name: CI
 
+# Two tiers.
+#
+#   Feature PRs (-> develop) get the fast lane: static analysis plus unit,
+#   component and Storybook tests. That is the signal you need while iterating.
+#
+#   Promotion PRs (develop -> main) additionally build the app and run the
+#   end-to-end suite against that build, because that is the point where the
+#   code is about to become production.
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [develop, main]
+  push:
     branches: [main]
 
 concurrency:
@@ -15,7 +23,7 @@ env:
   CI: 'true'
 
 jobs:
-  # Everything that needs no browser and no build. Fast, so it fails first.
+  # No browser, no build, no container — so this reports first.
   static:
     name: Static checks
     runs-on: ubuntu-latest
@@ -44,7 +52,7 @@ jobs:
         run: pnpm check:deps
 
   # Component tests and Storybook stories are both Vitest browser-mode runs, so
-  # they share one container rather than paying for two.
+  # they share one container rather than paying two container start-ups.
   test:
     name: Tests
     runs-on: ubuntu-latest
@@ -57,16 +65,17 @@ jobs:
       - uses: ./.github/actions/setup-project
 
       - name: Unit and component tests
-        run: pnpm test --coverage
+        run: pnpm test
 
       - name: Storybook stories
         run: pnpm storybook:test
 
-  # Builds and then exercises the build. Keeping both in one job avoids handing
-  # `.next` between jobs: a cache written on the host runner is not reliably
-  # restorable inside a container, because the compression differs.
+  # The expensive tier: a second container plus a full production build.
+  # Skipped on feature PRs into `develop`, where the jobs above already cover
+  # the code under change.
   e2e:
     name: Build and E2E
+    if: github.event_name == 'push' || github.base_ref == 'main'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     container:
