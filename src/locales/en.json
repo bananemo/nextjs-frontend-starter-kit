@@ -1,0 +1,58 @@
+{
+  "Metadata": {
+    "title": "Next.js Frontend Starter Kit",
+    "description": "A frontend-only Next.js starter with swappable observability and analytics layers."
+  },
+  "Home": {
+    "title": "Next.js Frontend Starter Kit",
+    "subtitle": "Frontend-only. No database, no backend, no auth.",
+    "demoFormLink": "Try the demo form",
+    "features": {
+      "heading": "What's included",
+      "ui": "shadcn/ui, Tailwind CSS v4 and design tokens as a typed module",
+      "forms": "react-hook-form and zod, with self-contained field components",
+      "observability": "A provider-agnostic error reporting layer",
+      "analytics": "A provider-agnostic analytics layer",
+      "i18n": "next-intl with locale-prefixed routing",
+      "seo": "Metadata, sitemap, robots, JSON-LD and OG images"
+    }
+  },
+  "DemoForm": {
+    "title": "Demo form",
+    "description": "Shows the field pattern: react-hook-form for state, zod for validation.",
+    "name": "Name",
+    "namePlaceholder": "Ada Lovelace",
+    "email": "Email",
+    "emailPlaceholder": "ada@example.com",
+    "role": "Role",
+    "rolePlaceholder": "Select a role",
+    "roleEngineer": "Engineer",
+    "roleDesigner": "Designer",
+    "roleOther": "Other",
+    "headcount": "Team size",
+    "headcountDescription": "Number of people on your team.",
+    "submit": "Submit",
+    "submitted": "Thanks, {name}."
+  },
+  "Error": {
+    "title": "Something went wrong",
+    "description": "An unexpected error occurred. The error has been reported.",
+    "retry": "Try again"
+  },
+  "NotFound": {
+    "title": "Page not found",
+    "description": "We couldn't find the page you were looking for.",
+    "backHome": "Back to home"
+  },
+  "ThemeToggle": {
+    "label": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "LocaleSwitcher": {
+    "label": "Change language",
+    "en": "English",
+    "zh-TW": "中文（台灣）"
+  }
+}

@@ -1,0 +1,108 @@
+name: CI
+
+# Two tiers.
+#
+#   Feature PRs (-> develop) get the fast lane: static analysis plus unit,
+#   component and Storybook tests. That is the signal you need while iterating.
+#
+#   Promotion PRs (develop -> main) additionally build the app and run the
+#   end-to-end suite against that build, because that is the point where the
+#   code is about to become production.
+on:
+  pull_request:
+    branches: [develop, main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+env:
+  # Env validation is skipped in CI; see `skipValidation` in src/lib/env.ts.
+  CI: 'true'
+
+jobs:
+  # No browser, no build, no container — so this reports first.
+  static:
+    name: Static checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          # Needed to validate every commit in the PR range.
+          fetch-depth: 0
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Validate commit messages
+        if: github.event_name == 'pull_request'
+        run: pnpm exec commitlint --from ${{ github.event.pull_request.base.sha }} --to ${{ github.event.pull_request.head.sha }} --verbose
+
+      # `next typegen` runs first: PageProps/LayoutProps are generated globals
+      # and do not exist until it has. `pnpm check:types` does both.
+      - name: Types
+        run: pnpm check:types
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unused code and dependencies
+        run: pnpm check:deps
+
+  # Component tests and Storybook stories are both Vitest browser-mode runs, so
+  # they share one container rather than paying two container start-ups.
+  test:
+    name: Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Unit and component tests
+        run: pnpm test
+
+      - name: Storybook stories
+        run: pnpm storybook:test
+
+  # The expensive tier: a second container plus a full production build.
+  # Skipped on feature PRs into `develop`, where the jobs above already cover
+  # the code under change.
+  e2e:
+    name: Build and E2E
+    if: github.event_name == 'push' || github.base_ref == 'main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    container:
+      image: mcr.microsoft.com/playwright:v1.63.0-noble
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/setup-project
+
+      - name: Restore Next.js cache
+        uses: actions/cache@v5
+        with:
+          path: .next/cache
+          key: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-${{ hashFiles('src/**') }}
+          restore-keys: nextjs-${{ hashFiles('pnpm-lock.yaml') }}-
+
+      - name: Build
+        run: pnpm build
+
+      # playwright.config.ts starts `pnpm start` against the build above.
+      - name: E2E tests
+        run: pnpm test:e2e
+
+      - name: Upload test results
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: playwright-results
+          path: test-results/
+          retention-days: 7

@@ -1,0 +1,175 @@
+@import 'tailwindcss';
+
+/* next-themes writes `class="dark"` on <html>; teach Tailwind that variant. */
+@custom-variant dark (&:is(.dark *));
+
+/*
+ * Design tokens.
+ *
+ * In Tailwind v4 the stylesheet is the config — there is no tailwind.config.ts.
+ * Anything declared in `@theme` becomes a utility, so `--text-body-1` gives you
+ * `text-body-1` and `--shadow-2` gives you `shadow-2`.
+ */
+@theme {
+  /* Radius — shadcn/ui derives its scale from --radius */
+  --radius: 0.625rem;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  /*
+   * Named type scale. Using `text-body-1` rather than `text-sm` keeps
+   * typography a design decision instead of a per-component guess.
+   */
+  --text-display-1: 48px;
+  --text-display-1--line-height: 56px;
+  --text-display-1--letter-spacing: -0.96px;
+  --text-display-1--font-weight: 700;
+
+  --text-heading-1: 32px;
+  --text-heading-1--line-height: 38px;
+  --text-heading-1--letter-spacing: -0.32px;
+  --text-heading-1--font-weight: 700;
+
+  --text-heading-2: 24px;
+  --text-heading-2--line-height: 32px;
+  --text-heading-2--letter-spacing: -0.24px;
+  --text-heading-2--font-weight: 700;
+
+  --text-heading-3: 20px;
+  --text-heading-3--line-height: 28px;
+  --text-heading-3--font-weight: 600;
+
+  --text-title: 18px;
+  --text-title--line-height: 26px;
+  --text-title--font-weight: 600;
+
+  --text-subtitle: 16px;
+  --text-subtitle--line-height: 24px;
+  --text-subtitle--font-weight: 500;
+
+  --text-body-1: 14px;
+  --text-body-1--line-height: 20px;
+  --text-body-1--font-weight: 400;
+
+  --text-body-2: 13px;
+  --text-body-2--line-height: 18px;
+  --text-body-2--font-weight: 400;
+
+  --text-caption: 12px;
+  --text-caption--line-height: 18px;
+  --text-caption--font-weight: 400;
+
+  /* Elevation */
+  --shadow-1: 0 1px 3px 0 rgb(0 0 0 / 0.05);
+  --shadow-2: 0 2px 4px 0 rgb(0 0 0 / 0.1);
+  --shadow-3: 0 12px 20px -2px rgb(0 0 0 / 0.15);
+  --shadow-4: 0 32px 48px -12px rgb(0 0 0 / 0.2);
+}
+
+/*
+ * Colours live on `:root` / `.dark` rather than in `@theme` so the same
+ * utility can resolve to a different value per colour scheme. Token names
+ * follow shadcn/ui's contract, so `pnpm dlx shadcn@latest add <component>`
+ * keeps working without hand-editing every component.
+ */
+:root {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+  --chart-1: oklch(0.646 0.222 41.116);
+  --chart-2: oklch(0.6 0.118 184.704);
+  --chart-3: oklch(0.398 0.07 227.392);
+  --chart-4: oklch(0.828 0.189 84.429);
+  --chart-5: oklch(0.769 0.188 70.08);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.269 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.371 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+}
+
+/*
+ * Map the colour properties above onto Tailwind's `--color-*` namespace.
+ * `inline` means utilities resolve `var(--background)` at use time, so the same
+ * class picks up the light or dark value automatically.
+ */
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Wired to the `next/font` CSS variables set on <html> in the root layout. */
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
