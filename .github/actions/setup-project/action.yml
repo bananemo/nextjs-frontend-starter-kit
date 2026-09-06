@@ -10,6 +10,13 @@ inputs:
 runs:
   using: composite
   steps:
+    # The container-based jobs run as a different uid than the one that owns the
+    # checkout, so git refuses to operate on it ("dubious ownership"). That
+    # breaks `lefthook install`, which pnpm runs via the `prepare` script.
+    - name: Trust the workspace directory
+      shell: bash
+      run: git config --global --add safe.directory "$GITHUB_WORKSPACE"
+
     - name: Install pnpm
       uses: pnpm/action-setup@v4
 
